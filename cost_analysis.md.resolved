@@ -1,0 +1,71 @@
+# AnimeForge: Cost Analysis, Competitors & Projections
+
+This document breaks down the unit economics of the automated anime video generation platform, analyzes current market competitors, and projects potential profitability.
+
+---
+
+## 1. Cost Analysis Per User
+
+Because AnimeForge was designed around an incredibly lean tech stack (Vercel, Supabase, Google Gemini Free Tier, Upstash Free Tier), your fixed infrastructure costs are effectively **$0.00** while starting out.
+
+Your **only variable costs** come from the Replicate API (which charges by seconds of GPU compute).
+
+### Unit Economics (Per Video)
+- **Story & Prompt Generation (Google Gemini)**: $0.00 *(Free tier includes 1,500 requests per day)*
+- **Anime Avatar Image (Animagine-XL-3.1)**: Runs on Nvidia A40 hardware for ~3 seconds. Cost: **~$0.002**
+- **Video Animation (Stable Video Diffusion)**: Runs on Nvidia A100 hardware for ~25 seconds. Cost: **~$0.035**
+- **Total Direct Cost Per Video:**  **~$0.037**
+
+### Cost Per Active User (Monthly)
+If a user schedules the automation to generate and post **1 video every single day** (30 videos/month):
+- 30 videos * $0.037 = **$1.11 per month in pure API costs.**
+
+> [!TIP]
+> A standard SaaS pricing model of **$9.99/month** will yield an **~88% Gross Margin** on your heaviest users.
+
+---
+
+## 2. Competitor Landscape
+
+The AI Video Generator market is currently booming, but mostly focused on corporate talking heads (HeyGen) or stock-footage compilation (InVideo/Pictory). Very few focus exclusively on the high-engagement Anime/Faceless Niche with full automation.
+
+| Competitor | Target Audience | Pricing Model | Features | How AnimeForge Wins |
+| :--- | :--- | :--- | :--- | :--- |
+| **InVideo AI** | YouTube/TikTok Faceless Channels | $20 - $48 / month | Generates stock-footage videos from text prompts with AI voice. | **Niche Focus**: AnimeForge provides highly stylized Anime avatars instead of generic stock videos at a fraction of the cost. |
+| **HeyGen** | Corporate / Marketing / Education | $29 - $89 / month | Photorealistic avatars speaking from text. | **Automation**: HeyGen requires manual input and rendering per video. AnimeForge posts automatically on a schedule. |
+| **Luma Dream Machine / Runway ML** | Professional VFX / Artists | $15 - $95 / month | High-end video generation from text/images. | **Ease of Use**: They provide APIs but no "set-it-and-forget-it" social media automation layer. |
+| **Midjourney + Capcut (Manual Flow)** | Hobbyists | $10/mo + Software costs | Highest quality, manually intensive. | **Time**: It takes users 1-2 hours to generate, animate, and edit manually. AnimeForge takes 0 human hours once scheduled. |
+
+---
+
+## 3. Revenue Projections & Scaling Strategy
+
+### Projection Matrix
+
+Assuming a primary subscription tier of **$9.99/month** (allowing up to 30 automated videos/month).
+
+| Active Paid Users | Monthly Revenue | Est. API Costs (Max) | Est. Gross Profit |
+| :--- | :--- | :--- | :--- |
+| **10 Users** | $99.90 | ~$11.10 | **$88.80** |
+| **100 Users** | $999.00 | ~$111.00 | **$888.00** |
+| **500 Users** | $4,995.00 | ~$555.00 | **$4,440.00** |
+| **1,000 Users** | $9,990.00 | ~$1,110.00 | **$8,880.00** |
+
+> *(Note: The above assumes 100% of users use their maximum daily allowance, which rarely happens in SaaS. Real API costs will likely be 30-40% lower due to unused quotas).*
+
+### Scaling Timeline (The Roadmap)
+
+**Phase 1: Validation (0 - 50 Users)**
+- **Goal:** Prove people want automated anime content.
+- **Action:** Manual outreach in Discord anime communities, Reddit `/r/facelessyoutube` setups, and TikTok automation groups.
+- **Infrastructure:** Keep relying entirely on Vercel/Supabase Free tiers.
+
+**Phase 2: Growth (50 - 500 Users)**
+- **Goal:** Automate acquisition.
+- **Action:** Since the app generates TikToks/Shorts, use the app itself to create a TikTok account that posts daily about "How I automate this Anime account." The product markets itself.
+- **Infrastructure Upgrade (`~$50/mo`):** You will need to upgrade to Supabase Pro ($25/mo) once you pass 50,000 Monthly Active Users or need higher database storage for video files. Vercel Pro ($20/mo) may be needed if API bandwidth increases.
+
+**Phase 3: Scale (500+ Users)**
+- **Goal:** Feature expansion.
+- **Action:** Add AI Voiceover capabilities (using ElevenLabs or OpenAI TTS) to narrate the stories. Enable Midjourney API integration for premium users willing to pay $29.99/month for ultra-high-quality avatars.
+- **Infrastructure Upgrade (`~$150+/mo`):** Switch from Upstash Free to Upstash Pro for higher Cron job volume. Upgrade database storage limits on Supabase.
