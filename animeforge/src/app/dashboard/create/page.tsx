@@ -62,7 +62,6 @@ export default function CreateVideoPage() {
     const handleGenerate = async (overridePrompt?: string) => {
         if (!selectedNiche) return
         setStep('generating')
-        setLoading(true)
         setError(null)
         setResult(null)
         setVideoResult(null)
