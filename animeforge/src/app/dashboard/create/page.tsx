@@ -23,10 +23,10 @@ const NICHES = [
 ]
 
 const DURATIONS = [
-    { id: '30s', label: '30 Seconds', desc: 'Quick TikTok / Reel', icon: '⚡' },
-    { id: '60s', label: '1 Minute', desc: 'YouTube Short', icon: '🎬' },
-    { id: '2min', label: '2 Minutes', desc: 'Extended Short', icon: '📽️' },
-    { id: '5min', label: '5 Minutes', desc: 'Full Video', icon: '🎥' },
+    { id: '30s', label: '30 Seconds', desc: 'Quick TikTok / Reel', icon: '⚡', clipCount: 2 },
+    { id: '60s', label: '1 Minute', desc: 'YouTube Short', icon: '🎬', clipCount: 3 },
+    { id: '2min', label: '2 Minutes', desc: 'Extended Short', icon: '📽️', clipCount: 4 },
+    { id: '5min', label: '5 Minutes', desc: 'Full Video', icon: '🎥', clipCount: 4 },
 ]
 
 const SOUND_TRACKS = [
@@ -48,10 +48,9 @@ export default function CreateVideoPage() {
     const [selectedNiche, setSelectedNiche] = useState<string | null>(null)
     const [selectedDuration, setSelectedDuration] = useState<string | null>(null)
     const [customPrompt, setCustomPrompt] = useState('')
-    const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [videoLoading, setVideoLoading] = useState(false)
-    const [videoResult, setVideoResult] = useState<string | null>(null)
+    const [videoResult, setVideoResult] = useState<{ urls: string[]; totalSeconds: number } | null>(null)
     const [result, setResult] = useState<{
         enhancedPrompt: string;
         avatarUrl: string;
@@ -95,11 +94,11 @@ export default function CreateVideoPage() {
             const res = await fetch('/api/generate-video', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ imageUrl: result.avatarUrl }),
+                body: JSON.stringify({ imageUrl: result.avatarUrl, duration: selectedDuration }),
             })
             const data = await res.json()
             if (!res.ok) throw new Error(data.error || 'Failed to generate video')
-            setVideoResult(data.videoUrl)
+            setVideoResult({ urls: data.videoUrls, totalSeconds: data.totalSeconds })
         } catch (err: any) {
             setError(err.message)
         } finally {
@@ -193,6 +192,7 @@ export default function CreateVideoPage() {
                                     <div className="text-3xl mb-2">{dur.icon}</div>
                                     <div className="text-base font-semibold text-white">{dur.label}</div>
                                     <div className="text-xs text-gray-500 mt-1">{dur.desc}</div>
+                                    <div className="text-[10px] text-cyan-500/60 mt-1.5">{dur.clipCount} clips generated</div>
                                 </button>
                             ))}
                         </div>
@@ -256,7 +256,7 @@ export default function CreateVideoPage() {
                                 <div>
                                     <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Video Duration</p>
                                     <p className="text-white font-semibold">{selectedDurationData?.icon} {selectedDurationData?.label}</p>
-                                    <p className="text-xs text-gray-500">{selectedDurationData?.desc}</p>
+                                    <p className="text-xs text-gray-500">{selectedDurationData?.desc} — {selectedDurationData?.clipCount} clips</p>
                                 </div>
                                 <button type="button" onClick={() => setStep('duration')} className="text-xs text-purple-400 hover:text-purple-300 transition">Change</button>
                             </div>
@@ -292,7 +292,7 @@ export default function CreateVideoPage() {
                     </div>
                 )}
 
-                {/* ── STEP 5: RESULTS WITH AVATAR EDITOR & VIDEO SOUND EDITOR ── */}
+                {/* ── STEP 5: RESULTS ── */}
                 {step === 'result' && result && (
                     <ResultStep
                         result={result}
@@ -335,7 +335,7 @@ function ResultStep({
     result: { enhancedPrompt: string; avatarUrl: string }
     selectedDurationData: typeof DURATIONS[number] | undefined
     videoLoading: boolean
-    videoResult: string | null
+    videoResult: { urls: string[]; totalSeconds: number } | null
     error: string | null
     onGenerateVideo: () => void
     onEditAvatar: (editedPrompt: string) => void
@@ -430,37 +430,6 @@ function ResultStep({
                     )}
                 </div>
 
-                {/* ── FULL WIDTH: Video Story Panel ── */}
-                <div className="glass-card p-6 lg:col-span-2">
-                    <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-sm font-semibold text-gray-400">📖 Video Story — What should this avatar do?</h3>
-                        <button
-                            type="button"
-                            onClick={handleAutoGenerateStory}
-                            disabled={storyLoading}
-                            className="text-xs text-cyan-400 hover:text-cyan-300 transition px-3 py-1 rounded-full border border-cyan-500/30 bg-cyan-500/10 disabled:opacity-40"
-                        >
-                            {storyLoading ? '✨ Writing...' : '✨ Auto-Generate Story'}
-                        </button>
-                    </div>
-                    <p className="text-xs text-gray-600 mb-3">
-                        Describe the actions, emotions, and scenes you want in the video. This story guides the animation.
-                    </p>
-                    <textarea
-                        value={videoStory}
-                        onChange={(e) => setVideoStory(e.target.value)}
-                        rows={5}
-                        placeholder={`e.g. The samurai slowly draws his katana as cherry blossoms drift past. He takes a battle stance, eyes glowing with determination. The camera zooms in on his face as lightning crackles in the background. He charges forward with explosive speed, slashing through the air...`}
-                        className="input-field resize-none text-sm"
-                    />
-                    {videoStory && (
-                        <div className="mt-3 flex items-center gap-2">
-                            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                            <p className="text-xs text-green-400">Story ready — it will guide your video generation</p>
-                        </div>
-                    )}
-                </div>
-
                 {/* ── RIGHT: Video Generation & Sound Editor ── */}
                 <div className="glass-card p-6 flex flex-col">
                     <h3 className="text-sm font-semibold text-gray-400 mb-3">Video Generation</h3>
@@ -469,6 +438,9 @@ function ResultStep({
                     <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5 mb-4">
                         <p className="text-xs text-gray-500 mb-1">Selected Duration</p>
                         <p className="text-white font-semibold">{selectedDurationData?.icon} {selectedDurationData?.label}</p>
+                        <p className="text-xs text-cyan-500/70 mt-1">
+                            {selectedDurationData?.clipCount} clips generated in parallel (~4s each, looped to fill duration)
+                        </p>
                     </div>
 
                     {/* Sound Selection */}
@@ -496,8 +468,16 @@ function ResultStep({
                                     disabled={videoLoading}
                                     className="btn-primary w-full text-base py-4"
                                 >
-                                    {videoLoading ? '🎬 Generating Video...' : '🎬 Animate to Video →'}
+                                    {videoLoading
+                                        ? `🎬 Generating ${selectedDurationData?.clipCount ?? 1} clip${(selectedDurationData?.clipCount ?? 1) > 1 ? 's' : ''}... (2–5 min)`
+                                        : '🎬 Animate to Video →'
+                                    }
                                 </button>
+                                {videoLoading && (
+                                    <p className="text-xs text-gray-600 text-center">
+                                        Clips are generated in parallel. Please keep this tab open.
+                                    </p>
+                                )}
                                 <button
                                     type="button"
                                     onClick={onRegenerate}
@@ -508,15 +488,10 @@ function ResultStep({
                             </>
                         ) : (
                             <>
-                                <div className="relative w-full aspect-video rounded-xl overflow-hidden border border-white/10 bg-black">
-                                    <video
-                                        src={videoResult}
-                                        controls
-                                        autoPlay
-                                        loop
-                                        className="w-full h-full object-contain"
-                                    />
-                                </div>
+                                <MultiClipPlayer
+                                    clips={videoResult.urls}
+                                    totalSeconds={videoResult.totalSeconds}
+                                />
 
                                 {selectedSound !== 'none' && (
                                     <div className="p-3 rounded-xl bg-cyan-500/5 border border-cyan-500/20 text-xs text-cyan-300 flex items-center gap-2">
@@ -526,7 +501,7 @@ function ResultStep({
                                 )}
 
                                 <a
-                                    href={videoResult}
+                                    href={videoResult.urls[0]}
                                     download="animeforge_video.mp4"
                                     className="btn-primary w-full block text-center"
                                 >
@@ -543,6 +518,131 @@ function ResultStep({
                         )}
                     </div>
                 </div>
+
+                {/* ── FULL WIDTH: Video Story Panel ── */}
+                <div className="glass-card p-6 lg:col-span-2">
+                    <div className="flex items-center justify-between mb-3">
+                        <h3 className="text-sm font-semibold text-gray-400">📖 Video Story — What should this avatar do?</h3>
+                        <button
+                            type="button"
+                            onClick={handleAutoGenerateStory}
+                            disabled={storyLoading}
+                            className="text-xs text-cyan-400 hover:text-cyan-300 transition px-3 py-1 rounded-full border border-cyan-500/30 bg-cyan-500/10 disabled:opacity-40"
+                        >
+                            {storyLoading ? '✨ Writing...' : '✨ Auto-Generate Story'}
+                        </button>
+                    </div>
+                    <p className="text-xs text-gray-600 mb-3">
+                        Describe the actions, emotions, and scenes you want in the video. This story guides the animation.
+                    </p>
+                    <textarea
+                        value={videoStory}
+                        onChange={(e) => setVideoStory(e.target.value)}
+                        rows={5}
+                        placeholder={`e.g. The samurai slowly draws his katana as cherry blossoms drift past. He takes a battle stance, eyes glowing with determination. The camera zooms in on his face as lightning crackles in the background...`}
+                        className="input-field resize-none text-sm"
+                    />
+                    {videoStory && (
+                        <div className="mt-3 flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                            <p className="text-xs text-green-400">Story ready — it will guide your video generation</p>
+                        </div>
+                    )}
+                </div>
+
+            </div>
+        </div>
+    )
+}
+
+/* ─────────────────────────────── */
+/* ─── MULTI-CLIP VIDEO PLAYER ── */
+/* ─────────────────────────────── */
+
+function formatSeconds(secs: number) {
+    if (secs < 60) return `${secs}s`
+    const m = Math.floor(secs / 60)
+    const s = secs % 60
+    return s > 0 ? `${m}m ${s}s` : `${m}m`
+}
+
+function MultiClipPlayer({ clips, totalSeconds }: { clips: string[]; totalSeconds: number }) {
+    const [currentIndex, setCurrentIndex] = useState(0)
+    const [elapsed, setElapsed] = useState(0)
+    const [completed, setCompleted] = useState(false)
+    const videoRef = useRef<HTMLVideoElement>(null)
+    const startTimeRef = useRef<number>(Date.now())
+    const timerRef = useRef<NodeJS.Timeout | null>(null)
+
+    useEffect(() => {
+        startTimeRef.current = Date.now()
+        timerRef.current = setInterval(() => {
+            const secs = Math.floor((Date.now() - startTimeRef.current) / 1000)
+            setElapsed(secs)
+            if (secs >= totalSeconds) {
+                setCompleted(true)
+                if (timerRef.current) clearInterval(timerRef.current)
+            }
+        }, 1000)
+        return () => { if (timerRef.current) clearInterval(timerRef.current) }
+    }, [totalSeconds])
+
+    const handleEnded = () => {
+        if (!completed) {
+            setCurrentIndex(i => (i + 1) % clips.length)
+        }
+    }
+
+    useEffect(() => {
+        if (videoRef.current) {
+            videoRef.current.load()
+            videoRef.current.play().catch(() => {})
+        }
+    }, [currentIndex])
+
+    const progress = Math.min(elapsed / totalSeconds, 1)
+
+    return (
+        <div className="space-y-3">
+            <div className="relative w-full aspect-video rounded-xl overflow-hidden border border-white/10 bg-black">
+                <video
+                    ref={videoRef}
+                    src={clips[currentIndex]}
+                    autoPlay
+                    className="w-full h-full object-contain"
+                    onEnded={handleEnded}
+                />
+                {completed && (
+                    <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
+                        <div className="text-center">
+                            <p className="text-white font-semibold mb-1">Video Complete</p>
+                            <p className="text-xs text-gray-400">
+                                {clips.length} unique clip{clips.length > 1 ? 's' : ''} looped to fill {formatSeconds(totalSeconds)}
+                            </p>
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* Progress bar */}
+            <div>
+                <div className="flex justify-between text-xs text-gray-500 mb-1">
+                    <span>Clip {currentIndex + 1} / {clips.length}</span>
+                    <span>{formatSeconds(elapsed)} / {formatSeconds(totalSeconds)}</span>
+                </div>
+                <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+                    <div
+                        className="h-full bg-gradient-to-r from-purple-500 to-cyan-500 transition-all duration-1000 rounded-full"
+                        style={{ width: `${progress * 100}%` }}
+                    />
+                </div>
+            </div>
+
+            <div className="flex items-center gap-2 text-xs text-gray-600">
+                <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                <span>
+                    {clips.length} clip{clips.length > 1 ? 's' : ''} generated — cycling to fill {formatSeconds(totalSeconds)}
+                </span>
             </div>
         </div>
     )
@@ -577,7 +677,6 @@ function SoundEditor({
     const timerRef = useRef<NodeJS.Timeout | null>(null)
     const fileInputRef = useRef<HTMLInputElement | null>(null)
 
-    // Cleanup audio on unmount
     useEffect(() => {
         return () => {
             if (audioRef.current) {
@@ -590,15 +689,11 @@ function SoundEditor({
 
     const handlePlayPreview = useCallback((trackId: string) => {
         if (playingTrack === trackId) {
-            // Stop
             audioRef.current?.pause()
             setPlayingTrack(null)
             return
         }
-        // Stop any current playback
         audioRef.current?.pause()
-        // For demo, we'll use the Web Audio API to generate a short tone
-        // In production, replace with actual audio URLs
         const ctx = new AudioContext()
         const osc = ctx.createOscillator()
         const gain = ctx.createGain()
@@ -711,103 +806,99 @@ function SoundEditor({
             </div>
 
             {/* Expanded Picker */}
-            {
-                showSoundPicker && (
-                    <div className="mt-3 space-y-4 animate-fade-in">
+            {showSoundPicker && (
+                <div className="mt-3 space-y-4 animate-fade-in">
 
-                        {/* Built-in Tracks */}
-                        <div>
-                            <p className="text-xs text-gray-600 mb-2 font-medium">Built-in Tracks</p>
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                                {SOUND_TRACKS.map((track) => (
-                                    <div
-                                        key={track.id}
-                                        className={`
+                    {/* Built-in Tracks */}
+                    <div>
+                        <p className="text-xs text-gray-600 mb-2 font-medium">Built-in Tracks</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            {SOUND_TRACKS.map((track) => (
+                                <div
+                                    key={track.id}
+                                    className={`
                                         flex items-center gap-2 p-3 rounded-xl border transition-all duration-200 cursor-pointer
                                         ${selectedSound === track.id
-                                                ? 'border-cyan-500/60 bg-cyan-500/15 shadow-[0_0_15px_rgba(6,182,212,0.15)]'
-                                                : 'border-white/[0.06] bg-white/[0.03] hover:border-cyan-500/30 hover:bg-cyan-500/[0.06]'
-                                            }
+                                            ? 'border-cyan-500/60 bg-cyan-500/15 shadow-[0_0_15px_rgba(6,182,212,0.15)]'
+                                            : 'border-white/[0.06] bg-white/[0.03] hover:border-cyan-500/30 hover:bg-cyan-500/[0.06]'
+                                        }
                                     `}
-                                        onClick={() => {
-                                            setSelectedSound(track.id)
-                                        }}
-                                    >
-                                        {track.id !== 'none' && (
-                                            <button
-                                                type="button"
-                                                onClick={(e) => { e.stopPropagation(); handlePlayPreview(track.id) }}
-                                                className="w-7 h-7 rounded-full bg-white/10 border border-white/10 flex items-center justify-center text-xs text-white hover:bg-white/20 transition shrink-0"
-                                            >
-                                                {playingTrack === track.id ? '⏹' : '▶'}
-                                            </button>
-                                        )}
-                                        <div className="flex-1 min-w-0">
-                                            <div className="text-xs font-medium text-white truncate">{track.emoji} {track.label}</div>
-                                            <div className="text-[10px] text-gray-500 truncate">{track.desc}</div>
-                                        </div>
+                                    onClick={() => setSelectedSound(track.id)}
+                                >
+                                    {track.id !== 'none' && (
+                                        <button
+                                            type="button"
+                                            onClick={(e) => { e.stopPropagation(); handlePlayPreview(track.id) }}
+                                            className="w-7 h-7 rounded-full bg-white/10 border border-white/10 flex items-center justify-center text-xs text-white hover:bg-white/20 transition shrink-0"
+                                        >
+                                            {playingTrack === track.id ? '⏹' : '▶'}
+                                        </button>
+                                    )}
+                                    <div className="flex-1 min-w-0">
+                                        <div className="text-xs font-medium text-white truncate">{track.emoji} {track.label}</div>
+                                        <div className="text-[10px] text-gray-500 truncate">{track.desc}</div>
                                     </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Upload Custom Audio */}
-                        <div>
-                            <p className="text-xs text-gray-600 mb-2 font-medium">Upload Your Own</p>
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                accept="audio/mp3,audio/wav,audio/ogg,audio/mpeg,audio/webm"
-                                onChange={handleFileUpload}
-                                className="hidden"
-                            />
-                            <button
-                                type="button"
-                                onClick={() => fileInputRef.current?.click()}
-                                className="w-full p-3 rounded-xl border border-dashed border-white/10 bg-white/[0.02] hover:border-purple-500/30 hover:bg-purple-500/[0.03] transition text-center group"
-                            >
-                                <span className="text-sm text-gray-400 group-hover:text-purple-300 transition">📁 Click to upload MP3, WAV, or OGG</span>
-                            </button>
-                            {customAudioUrl && (
-                                <div className="mt-2 p-2 rounded-lg bg-white/5 border border-white/5 flex items-center justify-between">
-                                    <span className="text-xs text-gray-400 truncate">📁 {customAudioName}</span>
-                                    <button type="button" onClick={() => playCustomAudio(customAudioUrl!)} className="text-xs text-cyan-400 hover:text-cyan-300 shrink-0 ml-2">▶ Preview</button>
                                 </div>
-                            )}
-                        </div>
-
-                        {/* Voice Recording */}
-                        <div>
-                            <p className="text-xs text-gray-600 mb-2 font-medium">Record Voiceover</p>
-                            {!isRecording ? (
-                                <button
-                                    type="button"
-                                    onClick={handleStartRecording}
-                                    className="w-full p-3 rounded-xl border border-white/10 bg-white/[0.02] hover:border-red-500/30 hover:bg-red-500/[0.03] transition flex items-center justify-center gap-2"
-                                >
-                                    <span className="w-3 h-3 rounded-full bg-red-500" />
-                                    <span className="text-sm text-gray-400">🎙️ Start Recording</span>
-                                </button>
-                            ) : (
-                                <button
-                                    type="button"
-                                    onClick={handleStopRecording}
-                                    className="w-full p-3 rounded-xl border border-red-500/40 bg-red-500/10 transition flex items-center justify-center gap-2"
-                                >
-                                    <span className="w-3 h-3 rounded-full bg-red-500 animate-pulse" />
-                                    <span className="text-sm text-red-300">⏹ Stop Recording ({formatTime(recordingTime)})</span>
-                                </button>
-                            )}
-                            {recordedUrl && !isRecording && (
-                                <div className="mt-2 p-2 rounded-lg bg-white/5 border border-white/5 flex items-center justify-between">
-                                    <span className="text-xs text-gray-400">🎙️ Voice recording ready</span>
-                                    <button type="button" onClick={() => playCustomAudio(recordedUrl!)} className="text-xs text-cyan-400 hover:text-cyan-300 shrink-0 ml-2">▶ Preview</button>
-                                </div>
-                            )}
+                            ))}
                         </div>
                     </div>
-                )
-            }
-        </div >
+
+                    {/* Upload Custom Audio */}
+                    <div>
+                        <p className="text-xs text-gray-600 mb-2 font-medium">Upload Your Own</p>
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="audio/mp3,audio/wav,audio/ogg,audio/mpeg,audio/webm"
+                            onChange={handleFileUpload}
+                            className="hidden"
+                        />
+                        <button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            className="w-full p-3 rounded-xl border border-dashed border-white/10 bg-white/[0.02] hover:border-purple-500/30 hover:bg-purple-500/[0.03] transition text-center group"
+                        >
+                            <span className="text-sm text-gray-400 group-hover:text-purple-300 transition">📁 Click to upload MP3, WAV, or OGG</span>
+                        </button>
+                        {customAudioUrl && (
+                            <div className="mt-2 p-2 rounded-lg bg-white/5 border border-white/5 flex items-center justify-between">
+                                <span className="text-xs text-gray-400 truncate">📁 {customAudioName}</span>
+                                <button type="button" onClick={() => playCustomAudio(customAudioUrl!)} className="text-xs text-cyan-400 hover:text-cyan-300 shrink-0 ml-2">▶ Preview</button>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Voice Recording */}
+                    <div>
+                        <p className="text-xs text-gray-600 mb-2 font-medium">Record Voiceover</p>
+                        {!isRecording ? (
+                            <button
+                                type="button"
+                                onClick={handleStartRecording}
+                                className="w-full p-3 rounded-xl border border-white/10 bg-white/[0.02] hover:border-red-500/30 hover:bg-red-500/[0.03] transition flex items-center justify-center gap-2"
+                            >
+                                <span className="w-3 h-3 rounded-full bg-red-500" />
+                                <span className="text-sm text-gray-400">🎙️ Start Recording</span>
+                            </button>
+                        ) : (
+                            <button
+                                type="button"
+                                onClick={handleStopRecording}
+                                className="w-full p-3 rounded-xl border border-red-500/40 bg-red-500/10 transition flex items-center justify-center gap-2"
+                            >
+                                <span className="w-3 h-3 rounded-full bg-red-500 animate-pulse" />
+                                <span className="text-sm text-red-300">⏹ Stop Recording ({formatTime(recordingTime)})</span>
+                            </button>
+                        )}
+                        {recordedUrl && !isRecording && (
+                            <div className="mt-2 p-2 rounded-lg bg-white/5 border border-white/5 flex items-center justify-between">
+                                <span className="text-xs text-gray-400">🎙️ Voice recording ready</span>
+                                <button type="button" onClick={() => playCustomAudio(recordedUrl!)} className="text-xs text-cyan-400 hover:text-cyan-300 shrink-0 ml-2">▶ Preview</button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+        </div>
     )
 }
