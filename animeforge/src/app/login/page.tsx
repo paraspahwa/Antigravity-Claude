@@ -26,6 +26,7 @@ export default async function LoginPage({
                             Email Address
                         </label>
                         <input
+                            id="email"
                             className="input-field"
                             name="email"
                             type="email"
@@ -39,6 +40,7 @@ export default async function LoginPage({
                             Password
                         </label>
                         <input
+                            id="password"
                             className="input-field"
                             type="password"
                             name="password"

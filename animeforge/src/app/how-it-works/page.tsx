@@ -167,7 +167,7 @@ function GuideStep({ number, title, color, items }: { number: string; title: str
                 </div>
                 <h3 className="text-lg font-semibold text-white">{title}</h3>
             </div>
-            <ul className="space-y-2 ml-13">
+            <ul className="space-y-2 ml-14">
                 {items.map((item, i) => (
                     <li key={i} className="text-sm text-gray-400 leading-relaxed flex items-start gap-2">
                         <span className="text-purple-500/50 mt-1 shrink-0">•</span>

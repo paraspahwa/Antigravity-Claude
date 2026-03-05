@@ -83,7 +83,7 @@ export default function PricingPage() {
                         )}
                         <h3 className="text-lg font-bold text-white mb-1">{tier.name}</h3>
                         <div className="mb-3">
-                            <span className="text-3xl font-extrabold text-white">{tier.symbol}{tier.price < 100 ? (tier.price / 100).toFixed(2) : tier.price.toLocaleString()}</span>
+                            <span className="text-3xl font-extrabold text-white">{tier.symbol}{tier.currency === 'USD' ? (tier.price / 100).toFixed(2) : tier.price.toLocaleString()}</span>
                         </div>
                         <div className="space-y-2 mb-6 flex-1">
                             <div className="flex items-center gap-2 text-sm text-gray-300">
