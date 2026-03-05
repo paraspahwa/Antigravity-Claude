@@ -2,6 +2,24 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import { generateVideoFromAvatar } from '@/utils/ai/replicate';
 
+// Allow up to 5 minutes for parallel clip generation
+export const maxDuration = 300;
+
+// Number of clips to generate per duration (each SVD-XT clip is ~4s at 25 frames/6fps)
+const CLIP_COUNTS: Record<string, number> = {
+    '30s': 2,
+    '60s': 3,
+    '2min': 4,
+    '5min': 4,
+};
+
+const DURATION_SECONDS: Record<string, number> = {
+    '30s': 30,
+    '60s': 60,
+    '2min': 120,
+    '5min': 300,
+};
+
 export async function POST(req: Request) {
     try {
         const supabase = await createClient();
@@ -11,26 +29,23 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { imageUrl } = await req.json();
+        const { imageUrl, duration } = await req.json();
 
         if (!imageUrl) {
             return NextResponse.json({ error: 'Image URL is required' }, { status: 400 });
         }
 
-        // Generate Video using Replicate SVD
-        const videoUrl = await generateVideoFromAvatar(imageUrl) as unknown as string;
+        const clipCount = CLIP_COUNTS[duration] ?? 1;
+        const totalSeconds = DURATION_SECONDS[duration] ?? 30;
 
-        if (!videoUrl) {
-            throw new Error("Failed to generate video.");
+        // Generate all clips in parallel — each is ~4s of SVD-XT animation
+        const videoUrls = await generateVideoFromAvatar(imageUrl, clipCount);
+
+        if (!videoUrls || videoUrls.length === 0) {
+            throw new Error("Failed to generate video clips.");
         }
 
-        // In a real production app, we would download this video arraybuffer 
-        // and upload it to Supabase Storage before returning the URL to ensure persistence.
-        // For now, returning the direct replicate URL.
-
-        return NextResponse.json({
-            videoUrl
-        });
+        return NextResponse.json({ videoUrls, totalSeconds });
 
     } catch (error: any) {
         console.error('Video Generation Error:', error);
