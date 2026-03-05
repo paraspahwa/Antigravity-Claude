@@ -79,8 +79,6 @@ export default function CreateVideoPage() {
         } catch (err: any) {
             setError(err.message)
             setStep('review')
-        } finally {
-            setLoading(false)
         }
     }
 
