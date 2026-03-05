@@ -61,6 +61,52 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── FACELESS SERIES FEATURE ── */}
+      <section className="px-6 py-20 bg-white/[0.01]">
+        <div className="max-w-5xl mx-auto">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-center">
+              <span className="gradient-text">Faceless Series Creator</span>
+            </h2>
+            <span className="px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full bg-cyan-500/15 border border-cyan-500/30 text-cyan-400">New</span>
+          </div>
+          <p className="text-center text-gray-500 mb-4 max-w-xl mx-auto text-sm">
+            Like FacelessReels — but every video is anime. Pick a viral niche, AI writes the script and generates all scenes, then posts daily on autopilot.
+          </p>
+
+          {/* Niche pills */}
+          <div className="flex flex-wrap justify-center gap-2 mb-10">
+            {['🖤 Dark Facts', '📖 Reddit Stories', '👻 Horror', '🧠 Viral Facts', '⚡ Mythology', '🔍 True Crime', '🧬 Dark Psychology', '🏯 Japanese Culture', '💰 Finance & Crypto', '⚔️ Anime Lore'].map(tag => (
+              <span key={tag} className="text-xs px-3 py-1 rounded-full border border-white/10 bg-white/[0.03] text-gray-400">{tag}</span>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-10">
+            <div className="glass-card p-5 text-center">
+              <div className="text-3xl mb-3">✍️</div>
+              <h3 className="text-base font-semibold text-white mb-2">AI Writes the Script</h3>
+              <p className="text-xs text-gray-500 leading-relaxed">Gemini picks the most viral angle for your niche and writes a hook-driven narrator script.</p>
+            </div>
+            <div className="glass-card p-5 text-center">
+              <div className="text-3xl mb-3">🎨</div>
+              <h3 className="text-base font-semibold text-white mb-2">Anime Scenes Generated</h3>
+              <p className="text-xs text-gray-500 leading-relaxed">4 anime scene images created in parallel — in your chosen art style (Dark Fantasy, Ghibli, Cyberpunk, etc.)</p>
+            </div>
+            <div className="glass-card p-5 text-center">
+              <div className="text-3xl mb-3">📅</div>
+              <h3 className="text-base font-semibold text-white mb-2">Auto-Post on Schedule</h3>
+              <p className="text-xs text-gray-500 leading-relaxed">Schedule daily, 3×/week, or weekly posts to YouTube Shorts, TikTok, and Instagram Reels.</p>
+            </div>
+          </div>
+
+          <div className="text-center">
+            <Link href="/login" className="btn-primary text-lg px-10 py-4 inline-block">
+              Start Your Faceless Channel →
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* ── HOW IT WORKS (Summary) ── */}
       <section className="px-6 py-20 bg-white/[0.01]">
         <div className="max-w-5xl mx-auto">
@@ -92,11 +138,11 @@ export default function Home() {
         </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <FeatureCard emoji="🎭" title="Faceless Series Creator" description="Pick a viral niche (dark facts, Reddit stories, horror) and AI generates a full anime storyboard — post daily on autopilot." highlight />
           <FeatureCard emoji="🎨" title="AI Anime Avatars" description="Generate stunning Japanese-style anime characters from text prompts using state-of-the-art AI." />
           <FeatureCard emoji="🎬" title="Video Animation" description="Transform static avatars into short cinematic animations perfect for TikTok, YouTube Shorts & Reels." />
           <FeatureCard emoji="🤖" title="Full Automation" description="Set a niche, pick a schedule, and AnimeForge generates & posts content daily, weekly, or monthly." />
           <FeatureCard emoji="🎵" title="Add Sound & Music" description="Choose from 9 background tracks, upload your own audio, or record a voiceover directly in the app." />
-          <FeatureCard emoji="📱" title="Mobile Friendly" description="Create and manage your content anywhere — fully responsive on Android and iOS devices." />
           <FeatureCard emoji="💳" title="Pay-Per-Use Credits" description="Buy only what you need. Flexible credit tiers for India and international users via Razorpay." />
         </div>
 
@@ -209,9 +255,12 @@ function StepCard({ step, title, desc }: { step: string; title: string; desc: st
 }
 
 /* ── COMPONENT: Feature Card ── */
-function FeatureCard({ emoji, title, description }: { emoji: string; title: string; description: string }) {
+function FeatureCard({ emoji, title, description, highlight }: { emoji: string; title: string; description: string; highlight?: boolean }) {
   return (
-    <div className="glass-card p-6 text-left">
+    <div className={`glass-card p-6 text-left relative ${highlight ? 'border-cyan-500/25 shadow-[0_0_24px_rgba(6,182,212,0.08)]' : ''}`}>
+      {highlight && (
+        <span className="absolute top-3 right-3 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded-full bg-cyan-500/15 border border-cyan-500/30 text-cyan-400">New</span>
+      )}
       <div className="text-3xl mb-3">{emoji}</div>
       <h3 className="text-lg font-semibold mb-2 text-white">{title}</h3>
       <p className="text-sm text-gray-400 leading-relaxed">{description}</p>

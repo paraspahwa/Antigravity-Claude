@@ -4,8 +4,24 @@ const replicate = new Replicate({
     auth: process.env.REPLICATE_API_TOKEN,
 });
 
+async function withRetry<T>(fn: () => Promise<T>, maxRetries = 3): Promise<T> {
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+            return await fn();
+        } catch (err: any) {
+            const status = err?.response?.status ?? err?.status;
+            const isRateLimit = status === 429 || err?.message?.includes('429');
+            if (!isRateLimit || attempt === maxRetries) throw err;
+            const retryAfter = parseInt(err?.response?.headers?.get?.('retry-after') ?? '10', 10);
+            const delay = (retryAfter + attempt * 2) * 1000;
+            await new Promise(resolve => setTimeout(resolve, delay));
+        }
+    }
+    throw new Error('Max retries exceeded');
+}
+
 export async function generateAnimeAvatar(prompt: string) {
-    const output = await replicate.run(
+    const output = await withRetry(() => replicate.run(
         "stability-ai/sdxl:39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b",
         {
             input: {
@@ -18,7 +34,7 @@ export async function generateAnimeAvatar(prompt: string) {
                 scheduler: "K_EULER"
             }
         }
-    );
+    ));
 
     if (Array.isArray(output)) {
         return output.map((item: any) =>
